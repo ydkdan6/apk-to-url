@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Built by DannyCodes - APK Share Hub</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.38.0/umd/supabase.min.js"></script>
+    <title>APK Share Hub</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         * {
             margin: 0;
@@ -222,11 +222,25 @@
             border-radius: 8px;
             display: none;
         }
+
+        .debug-info {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+            max-width: 200px;
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="logo">📱 APK Share Hub</div>
+        <div class="logo"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-smartphone-icon lucide-smartphone"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+             APK Share Hub</div>
         <div class="subtitle">Upload and share your Android apps instantly</div>
         
         <!-- Upload Section -->
@@ -260,8 +274,10 @@
         <div class="result-section" id="resultSection">
             <h3>🎉 Your app is ready to share!</h3>
             <div class="share-url" id="shareUrl"></div>
-            <button class="copy-button" onclick="copyToClipboard()">📋 Copy Link</button>
-            <button class="copy-button" onclick="shareLink()">📤 Share</button>
+            <button class="copy-button" onclick="copyToClipboard()"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy-icon lucide-copy"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                 Copy Link</button>
+            <button class="copy-button" onclick="shareLink()"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-share2-icon lucide-share-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+                 Share</button>
         </div>
 
         <!-- Download Section -->
@@ -273,39 +289,87 @@
         </div>
     </div>
 
+    <!-- Debug info -->
+    <div class="debug-info" id="debugInfo"></div>
+
     <script>
         // Replace with your Supabase credentials
         const SUPABASE_URL = 'https://gnmpcqgdqabxoawppbuf.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdubXBjcWdkcWFieG9hd3BwYnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NTUyNzYsImV4cCI6MjA2NTIzMTI3Nn0.NfGLTATybAX4s72QiI-QhY2QwlKGLd3dArgQPY7p7sI';
         
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-        
+        let supabase;
         let selectedFile = null;
         let currentApp = null;
 
-        // Check if this is a download page
-        window.onload = function() {
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('app');
+        // Debug function
+        function debug(message) {
+            console.log(message);
+            const debugDiv = document.getElementById('debugInfo');
+            debugDiv.innerHTML += message + '<br>';
+            debugDiv.style.display = 'block';
+        }
+
+        // Initialize app when page loads
+        window.addEventListener('DOMContentLoaded', function() {
+            debug('DOM loaded');
             
-            if (token) {
-                loadDownloadPage(token);
+            // Check if Supabase is available
+            if (typeof window.supabase === 'undefined') {
+                debug('Supabase not available immediately, waiting...');
+                setTimeout(initializeSupabase, 500);
+            } else {
+                initializeSupabase();
             }
-        };
+        });
+
+        function initializeSupabase() {
+            try {
+                if (typeof window.supabase !== 'undefined') {
+                    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+                    debug('Supabase initialized successfully');
+                    
+                    // Check for download page
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const token = urlParams.get('app');
+                    
+                    if (token) {
+                        debug('Download token found: ' + token);
+                        loadDownloadPage(token);
+                    } else {
+                        debug('Upload page loaded');
+                    }
+                    
+                    // Hide debug after 3 seconds
+                    setTimeout(() => {
+                        document.getElementById('debugInfo').style.display = 'none';
+                    }, 3000);
+                    
+                } else {
+                    debug('Supabase still not available');
+                    showError('Failed to load Supabase library. Please refresh the page.');
+                }
+            } catch (error) {
+                debug('Error initializing Supabase: ' + error.message);
+                showError('Failed to initialize app: ' + error.message);
+            }
+        }
 
         // File input handler
-        document.getElementById('fileInput').addEventListener('change', function(e) {
-            selectedFile = e.target.files[0];
-            if (selectedFile) {
-                if (selectedFile.name.endsWith('.apk')) {
-                    showFileInfo(selectedFile);
-                    document.getElementById('uploadButton').disabled = false;
-                } else {
-                    showError('Please select a valid APK file');
-                    selectedFile = null;
-                    document.getElementById('uploadButton').disabled = true;
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                selectedFile = e.target.files[0];
+                if (selectedFile) {
+                    if (selectedFile.name.endsWith('.apk')) {
+                        showFileInfo(selectedFile);
+                        document.getElementById('uploadButton').disabled = false;
+                        debug('File selected: ' + selectedFile.name);
+                    } else {
+                        showError('Please select a valid APK file');
+                        selectedFile = null;
+                        document.getElementById('uploadButton').disabled = true;
+                    }
                 }
-            }
+            });
         });
 
         function showFileInfo(file) {
@@ -323,6 +387,11 @@
         }
 
         async function uploadFile() {
+            if (!supabase) {
+                showError('App not initialized. Please refresh the page.');
+                return;
+            }
+            
             if (!selectedFile) {
                 showError('Please select a file first');
                 return;
@@ -334,6 +403,7 @@
 
             showLoading(true);
             hideError();
+            debug('Starting upload...');
 
             try {
                 // Upload file to Supabase Storage
@@ -341,7 +411,12 @@
                     .from('apk-files')
                     .upload(fileName, selectedFile);
 
-                if (uploadError) throw uploadError;
+                if (uploadError) {
+                    debug('Upload error: ' + uploadError.message);
+                    throw uploadError;
+                }
+
+                debug('File uploaded successfully');
 
                 // Save app info to database
                 const { data: dbData, error: dbError } = await supabase
@@ -356,7 +431,12 @@
                         }
                     ]);
 
-                if (dbError) throw dbError;
+                if (dbError) {
+                    debug('Database error: ' + dbError.message);
+                    throw dbError;
+                }
+
+                debug('App info saved to database');
 
                 // Show success
                 const shareUrl = `${window.location.origin}${window.location.pathname}?app=${shareToken}`;
@@ -372,6 +452,11 @@
 
         async function loadDownloadPage(token) {
             document.getElementById('uploadSection').style.display = 'none';
+            
+            if (!supabase) {
+                showError('App not initialized. Please refresh the page.');
+                return;
+            }
             
             try {
                 const { data, error } = await supabase
