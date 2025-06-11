@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Built by DannyCodes - APK Share Hub</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/supabase-js/2.38.0/umd/supabase.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            text-align: center;
+        }
+
+        .logo {
+            font-size: 2.5em;
+            color: #667eea;
+            margin-bottom: 10px;
+            font-weight: bold;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+
+        .upload-section {
+            margin-bottom: 30px;
+        }
+
+        .file-input-wrapper {
+            position: relative;
+            display: inline-block;
+            cursor: pointer;
+            margin-bottom: 20px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-input-button {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 15px 30px;
+            border-radius: 50px;
+            border: none;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .file-input-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .app-name-input {
+            width: 100%;
+            padding: 15px;
+            border: 2px solid #e1e1e1;
+            border-radius: 10px;
+            font-size: 1em;
+            margin-bottom: 20px;
+            transition: border-color 0.3s ease;
+        }
+
+        .app-name-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .upload-button {
+            background: linear-gradient(45deg, #4CAF50, #45a049);
+            color: white;
+            padding: 15px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(76, 175, 80, 0.3);
+        }
+
+        .upload-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(76, 175, 80, 0.4);
+        }
+
+        .upload-button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        .result-section {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f8f9fa;
+            border-radius: 15px;
+            display: none;
+        }
+
+        .share-url {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+            word-break: break-all;
+            font-family: monospace;
+            border: 2px solid #e1e1e1;
+        }
+
+        .copy-button {
+            background: #667eea;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px 5px;
+            transition: all 0.3s ease;
+        }
+
+        .copy-button:hover {
+            background: #5a6fd8;
+            transform: translateY(-1px);
+        }
+
+        .loading {
+            display: none;
+            margin: 20px 0;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .file-info {
+            margin: 15px 0;
+            padding: 10px;
+            background-color: #e8f4f8;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .download-section {
+            display: none;
+            text-align: center;
+        }
+
+        .download-button {
+            background: linear-gradient(45deg, #FF6B6B, #FF8E53);
+            color: white;
+            padding: 20px 40px;
+            border: none;
+            border-radius: 50px;
+            font-size: 1.2em;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+            margin: 20px 0;
+        }
+
+        .download-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 107, 107, 0.4);
+        }
+
+        .app-info {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin: 15px 0;
+            color: #666;
+        }
+
+        .error {
+            color: #ff4444;
+            margin: 10px 0;
+            padding: 10px;
+            background-color: #ffe6e6;
+            border-radius: 8px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="logo">📱 APK Share Hub</div>
+        <div class="subtitle">Upload and share your Android apps instantly</div>
+        
+        <!-- Upload Section -->
+        <div class="upload-section" id="uploadSection">
+            <input type="text" class="app-name-input" id="appName" placeholder="Enter app name (optional)">
+            
+            <div class="file-input-wrapper">
+                <input type="file" class="file-input" id="fileInput" accept=".apk">
+                <button class="file-input-button" onclick="document.getElementById('fileInput').click()">
+                    Choose APK File
+                </button>
+            </div>
+            
+            <div class="file-info" id="fileInfo"></div>
+            
+            <button class="upload-button" id="uploadButton" onclick="uploadFile()" disabled>
+                Upload & Generate Link
+            </button>
+        </div>
+
+        <!-- Loading -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Uploading your app...</p>
+        </div>
+
+        <!-- Error -->
+        <div class="error" id="errorMsg"></div>
+
+        <!-- Result Section -->
+        <div class="result-section" id="resultSection">
+            <h3>🎉 Your app is ready to share!</h3>
+            <div class="share-url" id="shareUrl"></div>
+            <button class="copy-button" onclick="copyToClipboard()">📋 Copy Link</button>
+            <button class="copy-button" onclick="shareLink()">📤 Share</button>
+        </div>
+
+        <!-- Download Section -->
+        <div class="download-section" id="downloadSection">
+            <div class="app-info" id="appInfo"></div>
+            <button class="download-button" id="downloadButton" onclick="downloadApp()">
+                📥 Download APK
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Replace with your Supabase credentials
+        const SUPABASE_URL = 'https://gnmpcqgdqabxoawppbuf.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdubXBjcWdkcWFieG9hd3BwYnVmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDk2NTUyNzYsImV4cCI6MjA2NTIzMTI3Nn0.NfGLTATybAX4s72QiI-QhY2QwlKGLd3dArgQPY7p7sI';
+        
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        
+        let selectedFile = null;
+        let currentApp = null;
+
+        // Check if this is a download page
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('app');
+            
+            if (token) {
+                loadDownloadPage(token);
+            }
+        };
+
+        // File input handler
+        document.getElementById('fileInput').addEventListener('change', function(e) {
+            selectedFile = e.target.files[0];
+            if (selectedFile) {
+                if (selectedFile.name.endsWith('.apk')) {
+                    showFileInfo(selectedFile);
+                    document.getElementById('uploadButton').disabled = false;
+                } else {
+                    showError('Please select a valid APK file');
+                    selectedFile = null;
+                    document.getElementById('uploadButton').disabled = true;
+                }
+            }
+        });
+
+        function showFileInfo(file) {
+            const fileInfo = document.getElementById('fileInfo');
+            const sizeInMB = (file.size / (1024 * 1024)).toFixed(2);
+            fileInfo.innerHTML = `
+                <strong>📄 ${file.name}</strong><br>
+                Size: ${sizeInMB} MB
+            `;
+            fileInfo.style.display = 'block';
+        }
+
+        function generateShareToken() {
+            return Math.random().toString(36).substring(2) + Date.now().toString(36);
+        }
+
+        async function uploadFile() {
+            if (!selectedFile) {
+                showError('Please select a file first');
+                return;
+            }
+
+            const appName = document.getElementById('appName').value || selectedFile.name.replace('.apk', '');
+            const shareToken = generateShareToken();
+            const fileName = `${shareToken}_${selectedFile.name}`;
+
+            showLoading(true);
+            hideError();
+
+            try {
+                // Upload file to Supabase Storage
+                const { data: uploadData, error: uploadError } = await supabase.storage
+                    .from('apk-files')
+                    .upload(fileName, selectedFile);
+
+                if (uploadError) throw uploadError;
+
+                // Save app info to database
+                const { data: dbData, error: dbError } = await supabase
+                    .from('apps')
+                    .insert([
+                        {
+                            app_name: appName,
+                            file_name: selectedFile.name,
+                            file_path: uploadData.path,
+                            file_size: selectedFile.size,
+                            share_token: shareToken
+                        }
+                    ]);
+
+                if (dbError) throw dbError;
+
+                // Show success
+                const shareUrl = `${window.location.origin}${window.location.pathname}?app=${shareToken}`;
+                showResult(shareUrl);
+
+            } catch (error) {
+                console.error('Upload error:', error);
+                showError('Upload failed: ' + error.message);
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadDownloadPage(token) {
+            document.getElementById('uploadSection').style.display = 'none';
+            
+            try {
+                const { data, error } = await supabase
+                    .from('apps')
+                    .select('*')
+                    .eq('share_token', token)
+                    .single();
+
+                if (error || !data) {
+                    showError('App not found or link has expired');
+                    return;
+                }
+
+                currentApp = data;
+                showDownloadSection(data);
+
+            } catch (error) {
+                console.error('Load error:', error);
+                showError('Failed to load app information');
+            }
+        }
+
+        function showDownloadSection(app) {
+            const downloadSection = document.getElementById('downloadSection');
+            const appInfo = document.getElementById('appInfo');
+            
+            const sizeInMB = (app.file_size / (1024 * 1024)).toFixed(2);
+            const uploadDate = new Date(app.upload_date).toLocaleDateString();
+            
+            appInfo.innerHTML = `
+                <h2>📱 ${app.app_name}</h2>
+                <div class="stats">
+                    <div><strong>Size:</strong> ${sizeInMB} MB</div>
+                    <div><strong>Uploaded:</strong> ${uploadDate}</div>
+                    <div><strong>Downloads:</strong> ${app.download_count}</div>
+                </div>
+                <p><strong>File:</strong> ${app.file_name}</p>
+            `;
+            
+            downloadSection.style.display = 'block';
+        }
+
+        async function downloadApp() {
+            if (!currentApp) return;
+
+            try {
+                // Get download URL
+                const { data, error } = await supabase.storage
+                    .from('apk-files')
+                    .createSignedUrl(currentApp.file_path, 3600); // 1 hour expiry
+
+                if (error) throw error;
+
+                // Increment download count
+                await supabase.rpc('increment_download_count', { 
+                    app_token: currentApp.share_token 
+                });
+
+                // Trigger download
+                const link = document.createElement('a');
+                link.href = data.signedUrl;
+                link.download = currentApp.file_name;
+                link.click();
+
+                // Update display
+                currentApp.download_count += 1;
+                showDownloadSection(currentApp);
+
+            } catch (error) {
+                console.error('Download error:', error);
+                showError('Download failed: ' + error.message);
+            }
+        }
+
+        function showResult(url) {
+            document.getElementById('shareUrl').textContent = url;
+            document.getElementById('resultSection').style.display = 'block';
+            document.getElementById('uploadSection').style.display = 'none';
+        }
+
+        function copyToClipboard() {
+            const url = document.getElementById('shareUrl').textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('Link copied to clipboard!');
+            });
+        }
+
+        function shareLink() {
+            const url = document.getElementById('shareUrl').textContent;
+            if (navigator.share) {
+                navigator.share({
+                    title: 'Download APK',
+                    text: 'Check out this Android app!',
+                    url: url
+                });
+            } else {
+                copyToClipboard();
+            }
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+            document.getElementById('uploadButton').disabled = show;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorMsg').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
